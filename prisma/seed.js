@@ -24,15 +24,30 @@ const seedQuestions = [
   }
 ];
 
+const bcrypt = require("bcrypt");
+
 async function main() {
   await prisma.question.deleteMany();
   await prisma.keyword.deleteMany();
+  await prisma.user.deleteMany();
+
+  const hashedPassword = await bcrypt.hash("1234", 10);
+  const user = await prisma.user.create({
+    data: {
+      email: "admin@example.com",
+      password: hashedPassword,
+      name: "Admin User",
+    },
+  });
+
+  console.log("Created user:", user.email);
 
   for (const q of seedQuestions) {
     await prisma.question.create({
       data: {
         question: q.question,
         answer: q.answer,
+        userId: user.id,
         keywords: {
           connectOrCreate: q.keywords.map((kw) => ({
             where: { name: kw },
