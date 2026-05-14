@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const { NotFoundError, ForbiddenError } = require("../lib/errors");
 
 async function isOwner(req, res, next) {
   const id = Number(req.params.qId);
@@ -7,17 +8,14 @@ async function isOwner(req, res, next) {
     include: { keywords: true },
   });
 
-  if (!question) {
-    return res.status(404).json({ message: "Question not found" });
-  }
+  if (!question) throw new NotFoundError("Question not found");
 
   if (question.userId !== req.user.userId) {
-    return res.status(403).json({ error: "You can only modify your own questions" });
+    throw new ForbiddenError("You can only modify your own questions");
   }
 
   req.question = question;
   next();
-
 }
 
 module.exports = isOwner;
