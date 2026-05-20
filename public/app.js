@@ -32,8 +32,13 @@ async function apiFetch(route, options = {}) {
   if (!isFormData) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${CONFIG.API_URL}${route}`, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.msg || "Request failed");
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(res.ok ? "Invalid response" : `Request failed (${res.status})`);
+  }
+  if (!res.ok) throw new Error(data.message || data.error || data.msg || "Request failed");
   return data;
 }
 

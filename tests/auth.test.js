@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const { resetDb, request, app, prisma } = require("./helpers");
 
 beforeEach(resetDb);
