@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app
 
@@ -13,6 +13,5 @@ COPY . .
 RUN mkdir -p public/uploads
 
 ENV NODE_ENV=production
-EXPOSE 3000
 
 CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
