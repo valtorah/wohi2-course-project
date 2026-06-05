@@ -21,6 +21,7 @@ model Question {
   question String    @db.Text
   answer   String    @db.Text
   imageUrl String?   @db.VarChar(255)
+  difficulty Int     @default(1)
   userId   Int
   user     User      @relation(fields: [userId], references: [id])
   keywords Keyword[]

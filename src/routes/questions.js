@@ -50,17 +50,18 @@ const QuestionInput = z.object({
   question: z.string().min(1),
   answer: z.string().min(1),
   keywords: z.union([z.string(), z.array(z.string())]).optional(),
+  difficulty: z.preprocess((val) => Number(val), z.number().min(1).max(5)).optional(),
 });
 
 router.get("/", async (req, res) => {
-  const { keyword } = req.query;
+  const { keyword, difficulty } = req.query;
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 5));
   const skip = (page - 1) * limit;
 
-  const where = keyword
-    ? { keywords: { some: { name: keyword } } }
-    : {};
+  const where = {};
+  if (keyword) where.keywords = { some: { name: keyword } };
+  if (difficulty) where.difficulty = parseInt(difficulty);
 
   const [filteredQuestions, total] = await Promise.all([
     prisma.question.findMany({
@@ -84,6 +85,22 @@ router.get("/", async (req, res) => {
     total,
     totalPages: Math.ceil(total / limit),
   });
+});
+
+router.get("/quiz", async (req, res) => {
+  const allIds = await prisma.question.findMany({ select: { id: true } });
+  const ids = allIds.map(q => q.id).sort(() => 0.5 - Math.random()).slice(0, 10);
+  
+  const randomQuestions = await prisma.question.findMany({
+    where: { id: { in: ids } },
+    include: {
+      keywords: true,
+      user: true,
+      attempts: { where: { userId: req.user.userId, correct: true }, take: 1 }
+    }
+  });
+  
+  res.json(randomQuestions.map(formatQuestion));
 });
 
 router.get("/:qId", async (req, res) => {
@@ -112,6 +129,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     data: {
       question: data.question,
       answer: data.answer,
+      difficulty: data.difficulty || 1,
       imageUrl,
       userId: req.user.userId,
       keywords: {
@@ -140,6 +158,7 @@ router.put("/:qId", upload.single("image"), isOwner, async (req, res) => {
   const data = {
     question: dataPayload.question,
     answer: dataPayload.answer,
+    difficulty: dataPayload.difficulty || 1,
     keywords: {
       set: [],
       connectOrCreate: keywordsArray.map((kw) => ({

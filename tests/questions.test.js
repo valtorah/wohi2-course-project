@@ -61,4 +61,26 @@ describe("questions tests", () => {
     const after = await prisma.question.findUnique({ where: { id: question.id } });
     expect(after).not.toBeNull();
   });
+
+  it("supports difficulty filtering", async () => {
+    const token = await registerAndLogin();
+    await createQuestion(token, { question: "Q1", answer: "A1", difficulty: 1 });
+    await createQuestion(token, { question: "Q2", answer: "A2", difficulty: 5 });
+
+    const res = await request(app).get("/api/questions?difficulty=5").set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].difficulty).toBe(5);
+  });
+
+  it("returns random quiz questions", async () => {
+    const token = await registerAndLogin();
+    for (let i = 0; i < 12; i++) {
+      await createQuestion(token, { question: `Q${i}`, answer: `A${i}` });
+    }
+
+    const res = await request(app).get("/api/questions/quiz").set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(10);
+  });
 });

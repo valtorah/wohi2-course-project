@@ -5,7 +5,7 @@ const prisma = require("./lib/prisma");
 const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
 const server = app.listen(PORT, HOST, () => {
-  logger.info({ port: PORT, host: HOST }, "server listening");
+  logger.info(`server listening on http://${HOST}:${PORT}`);
 });
 
 async function shutdown() {
